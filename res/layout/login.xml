@@ -1,0 +1,37 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/login_bg"
+    android:gravity="center"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/tips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="小提示：保持这个水平方向\n让画面进入镜头。"
+        android:textColor="@android:color/black"
+        android:textSize="20sp" >
+    </TextView>
+
+    <Button
+        android:id="@+id/open"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="进入 体验(动态)"
+        android:textColor="@android:color/black"
+        android:textSize="20sp" >
+    </Button>
+    <Button
+        android:id="@+id/open2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="进入 静态(动态)"
+        android:textColor="@android:color/black"
+        android:textSize="20sp" >
+    </Button>
+
+</LinearLayout>
