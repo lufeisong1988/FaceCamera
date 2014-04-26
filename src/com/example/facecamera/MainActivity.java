@@ -4,23 +4,44 @@ package com.example.facecamera;
  * user jugg
  */
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+
+
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Bitmap.Config;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
+import android.hardware.Camera.AutoFocusCallback;
+import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
 import android.os.Bundle;
+import android.os.Environment;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.view.Display;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.FrameLayout;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback{
+public class MainActivity extends Activity implements SurfaceHolder.Callback,OnClickListener, PictureCallback{
 	private SurfaceView mSurFaceView;
 	private Camera camera;
 	private SurfaceHolder holder;
 	private Camera.PreviewCallback previewCallback;
+	private FaceView faceview;
+	private FrameLayout layout;
+	private Button takePhoto_bnt;
 	
 	private double scale = Double.MAX_VALUE;
 	private double scaleScreen = Double.MAX_VALUE;
@@ -32,17 +53,36 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		init();
+		listener();
 	}
+	@SuppressLint("NewApi")
 	void init(){
 		Display display = getWindowManager().getDefaultDisplay();
 		screenW = display.getWidth();
 		screenH = display.getHeight();
-		mSurFaceView = (SurfaceView) findViewById(R.id.face_camera);
-		holder = mSurFaceView.getHolder();
-		previewCallback = new mPreviewCallback();
-		holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-		holder.addCallback(this); 
+		takePhoto_bnt = (Button) findViewById(R.id.takephoto);
+		layout = (FrameLayout) findViewById(R.id.camera);
+		try {
+			faceview = new FaceView(this);
+			getPreviewCallBack(faceview);
+			mSurFaceView = (SurfaceView) findViewById(R.id.face_camera);
+			layout.addView(faceview);
+			holder = mSurFaceView.getHolder();
+			holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+			holder.addCallback(this); 
+		} catch (IOException e) {
+			e.printStackTrace();
+			new AlertDialog.Builder(this).setMessage(e.getMessage()).create().show();
+		}
+		
 	}
+	void listener(){
+		takePhoto_bnt.setOnClickListener(this);
+		mSurFaceView.setOnClickListener(this);
+	}
+	void getPreviewCallBack(Camera.PreviewCallback previewCallback){
+    	this.previewCallback = previewCallback;
+    }
 	@Override
 	public void surfaceCreated(SurfaceHolder arg0) {
 		if(camera == null){
@@ -68,7 +108,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		Camera.Parameters params = camera.getParameters();
 		List<Size> size = params.getSupportedPreviewSizes();
 		List<Size> picSize = params.getSupportedPictureSizes();
-		// ªÒ»°“ª∏ˆ  ≈‰∆¡ƒª¥Û–°µƒ∑÷±Ê¬ 
+		// Ëé∑Âèñ‰∏Ä‰∏™ÈÄÇÈÖçÂ±èÂπïÂ§ßÂ∞èÁöÑÂàÜËæ®Áéá
 		for (int i = 0; i < size.size(); i++) {
 			Size fitsize = size.get(i);
 			scale = (double) fitsize.width / fitsize.height;
@@ -80,7 +120,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 				preScale = scale;
 			}
 		}
-		// —∞’“◊Ó∆•≈‰µƒ’’∆¨œÒÀÿ±»¡–
+		// ÂØªÊâæÊúÄÂåπÈÖçÁöÑÁÖßÁâáÂÉèÁ¥†ÊØîÂàó
 		for (int j = 0; j < picSize.size(); j++) {
 			Size fitPicSize = picSize.get(j);
 			double picScale = (double) fitPicSize.width / fitPicSize.height;
@@ -113,13 +153,48 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		}
 		
 	}
-	
-	class mPreviewCallback implements Camera.PreviewCallback{
-
+	AutoFocusCallback mAutoFocusCallback = new AutoFocusCallback() {//Ëá™Âä®ËÅöÁÑ¶
+		
 		@Override
-		public void onPreviewFrame(byte[] data, Camera camera) {
-			// TODO Auto-generated method stub
+		public void onAutoFocus(boolean success, Camera camera) {
 			
+		}
+	};
+
+	@Override
+	public void onClick(View v) {
+		switch(v.getId()){
+		case R.id.face_camera:
+			camera.autoFocus(mAutoFocusCallback);
+			break;
+		case R.id.takephoto:
+			bTake = true;
+			camera.takePicture(null, null, null,MainActivity.this);
+			break;
+		}
+	}
+	
+
+	boolean bTake = false;
+	@Override
+	public void onPictureTaken(byte[] arg0, Camera arg1) {
+//		File saveFile = new File(Environment.getExternalStorageDirectory().getPath()  + "/face_camera");
+//		if(!saveFile.exists())
+//			saveFile.mkdirs();
+//		File photoFile = new File(saveFile + "/face_photo.jpg");
+//		Bitmap screenBit = BitmapFactory.decodeByteArray(arg0, 0, arg0.length);
+//		try {
+//			photoFile.createNewFile();
+//			FileOutputStream fos = new FileOutputStream(photoFile);
+//			screenBit.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+//			fos.flush();
+//			fos.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		if(bTake){
+			faceview.takePhoto(MainActivity.this,arg0,screenW,screenH);
+			bTake = false;
 		}
 		
 	}
